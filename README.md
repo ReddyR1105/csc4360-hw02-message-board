@@ -94,4 +94,3 @@ On two independent Android devices or AVDs, install the same release APK. Open t
 The app targets Android and uses one board stream for this assignment. A large deployment should paginate older messages and bound the live query. The assignment build has no email verification, account management, rate limiting or moderation. Build and test fixtures contain no signing secrets or cloud accounts.
 
 [GitHub source repository](https://github.com/ReddyR1105/csc4360-hw02-message-board)
-

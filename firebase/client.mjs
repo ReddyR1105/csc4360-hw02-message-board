@@ -47,6 +47,3 @@ export function post(client, user, id, text) {
         !(await getDocFromServer(receipt)).exists()) throw error;
   });
 }
-
-
-

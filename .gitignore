@@ -56,3 +56,4 @@ android/key.properties
 .firebaserc
 firebase_app_id_file.json
 *service-account*.json
+/android/build/

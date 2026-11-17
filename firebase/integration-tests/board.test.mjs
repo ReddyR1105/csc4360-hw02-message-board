@@ -78,6 +78,3 @@ test('I02 repeated concurrent submissions use one document and retain receipt af
     await a.close();
   }
 });
-
-
-

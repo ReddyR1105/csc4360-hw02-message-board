@@ -13,4 +13,3 @@ try {
 } finally {
   await Promise.all([alice.close(), bob.close()]);
 }
-
