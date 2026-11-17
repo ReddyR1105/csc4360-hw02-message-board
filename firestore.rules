@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function profilePath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+    function receiptPath(uid, id) {
+      return /databases/$(database)/documents/users/$(uid)/postReceipts/$(id);
+    }
+    function messagePath(id) {
+      return /databases/$(database)/documents/messages/$(id);
+    }
+    function fields(data, keys) {
+      return data.keys().hasAll(keys) && data.keys().hasOnly(keys);
+    }
+    function validText(value, limit) {
+      return value is string && value.size() <= limit && value.matches('(?s).*\\S.*');
+    }
+    function validName(value) {
+      return validText(value, 40) && value.matches('[^\\r\\n\\t]+');
+    }
+    function ownedMessage() {
+      return isSelf(resource.data.authorUid);
+    }
+    function validMessageId(id) {
+      return id.matches('[A-Za-z0-9]{20}');
+    }
+
+    match /users/{uid} {
+      allow get: if isSelf(uid);
+      allow create: if isSelf(uid)
+        && fields(request.resource.data, ['uid', 'firstName', 'lastName', 'role', 'registrationDateTime'])
+        && request.resource.data.uid == uid
+        && validName(request.resource.data.firstName)
+        && validName(request.resource.data.lastName)
+        && request.resource.data.role == 'member'
+        && request.resource.data.registrationDateTime == request.time;
+
+      match /postReceipts/{id} {
+        allow get: if isSelf(uid);
+        allow create: if isSelf(uid) && validMessageId(id)
+          && fields(request.resource.data, ['createdAt'])
+          && request.resource.data.createdAt == request.time
+          && !exists(messagePath(id))
+          && getAfter(messagePath(id)).data.authorUid == uid;
+      }
+    }
+
+    match /messages/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && validMessageId(id)
+        && fields(request.resource.data, ['text', 'authorUid', 'authorName', 'createdAt', 'editedAt'])
+        && request.resource.data.authorUid == request.auth.uid
+        && validText(request.resource.data.text, 500)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.editedAt == null
+        && request.resource.data.authorName ==
+            get(profilePath(request.auth.uid)).data.firstName + ' ' +
+            get(profilePath(request.auth.uid)).data.lastName
+        && !exists(receiptPath(request.auth.uid, id))
+        && getAfter(receiptPath(request.auth.uid, id)).data.createdAt == request.time;
+      allow update: if ownedMessage()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt'])
+        && validText(request.resource.data.text, 500)
+        && request.resource.data.editedAt == request.time;
+      allow delete: if ownedMessage();
+    }
+  }
+}

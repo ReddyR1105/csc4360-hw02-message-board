@@ -1,0 +1,1 @@
+{"name":"message-board-verification","private":true,"type":"module","scripts":{"test:rules":"node --test firebase/rules-tests/*.test.mjs","seed":"node firebase/seed.mjs"},"devDependencies":{"firebase-tools":"15.23.0","firebase":"12.13.0","@firebase/rules-unit-testing":"5.0.0"}}
