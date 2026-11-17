@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:message_board/main.dart';
 import 'package:message_board/models/board_models.dart';
+import 'package:message_board/screens/board_screen.dart';
 import 'package:message_board/screens/entry_form.dart';
 import 'package:message_board/screens/splash_screen.dart';
 import 'package:message_board/services/board_service.dart';
@@ -129,4 +130,62 @@ void main() {
       expect(find.text('Sign in'), findsOneWidget);
     },
   );
+  testWidgets('F06 stream error recovers and board subscriptions dispose', (
+    tester,
+  ) async {
+    var listening = 0;
+    var cancelled = 0;
+    StreamController<List<BoardMessage>> controller() => StreamController(
+      onListen: () => listening++,
+      onCancel: () {
+        cancelled++;
+      },
+    );
+    final first = controller();
+    final retry = controller();
+    final service = _BoardStreamStub([first.stream, retry.stream]);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: boardTheme(),
+        home: BoardScreen(
+          service: service,
+          signOut: () async {},
+          isDemo: false,
+        ),
+      ),
+    );
+    expect(listening, 1);
+    first.addError(FirebaseException(plugin: 'firestore', code: 'unavailable'));
+    await tester.pumpAndSettle();
+    expect(find.text('Board unavailable'), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    expect(listening, 2);
+    expect(cancelled, 1);
+    retry.add([]);
+    await tester.pumpAndSettle();
+    expect(find.text('No messages yet'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(cancelled, 2);
+    unawaited(first.close());
+    unawaited(retry.close());
+  });
+}
+
+class _BoardStreamStub implements BoardService {
+  _BoardStreamStub(this.streams);
+  final List<Stream<List<BoardMessage>>> streams;
+  var calls = 0;
+
+  @override
+  final profile = const BoardProfile('sample-uid', 'Sample', 'Member');
+
+  @override
+  Future<PendingPost?> loadPending() async => null;
+
+  @override
+  Stream<List<BoardMessage>> messageBoard() => streams[calls++];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
