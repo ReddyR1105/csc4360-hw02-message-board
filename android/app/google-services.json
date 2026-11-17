@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "555901848899",
+    "project_id": "csc4360-hw02-common-room-rr",
+    "storage_bucket": "csc4360-hw02-common-room-rr.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:555901848899:android:9fcae5771f413fe75673f6",
+        "android_client_info": {
+          "package_name": "edu.gsu.csc4360.message_board"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQIogijOUEuTyXoxPAgkNf-1KTBAyXEe4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
